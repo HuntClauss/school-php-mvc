@@ -1,84 +1,68 @@
 <?php
 
+class Route {
+	public $path;
+	public $model;
+	public $controller;
+	public $view;
+
+	public function __construct($route, $controllerAction, $viewAction, $target) {
+		$this->path = trim($route, "\ \t\n\r\0\x0B\\/");
+		$this->model = $target."Model";
+
+		$this->controller = [
+			"class" => $target."Controller",
+			"action" => $controllerAction,
+		];
+
+		$this->view = [
+			"class" => $target."View",
+			"action" => $viewAction,
+		];
+	}
+}
+
 class Router {
 	private $routes = [];
 
-	public function get($route, $controller) {
-		$this->methodRoute($route, "GET", $controller);
+	public function get($route) {
+		$this->addRoute("GET", $route);
 	}
 
-	public function post($route, $controller) {
-		$this->methodRoute($route, "POST", $controller);
+	public function post($route) {
+		$this->addRoute("POST", $route);
 	}
 
-	public function view($route, $file) {
-		$this->routes[] = [
-			"method" => "GET",
-			"view" => true,
-			"route" => $route,
-			"file" => $file,
+	private function addRoute($method, $route) {
+		$temp = $route->path;
+		$this->routes["$method $temp"] = [
+			"model" => $route->model,
+			"controller" => $route->controller,
+			"view" => $route->view,
 		];
 	}
-
-	private function methodRoute($route, $method, $controller) {
-		$result = [
-			"method" => $method,
-			"route" => $route,
-			"controller" => $controller
-		];
-
-		if (strpos($controller, "@")) {
-			$parts = explode("@", $controller);
-
-			$result["controller"] = [
-				"class" => $parts[0],
-				"callback" => $parts[1]
-			];
-		}
-		$this->routes[] = $result;
-	}
-
-
 
 	public function match() {
-		$foundRoute = false;
-		foreach ($this->routes as $route) {
-			if ($this->compareRoutes($route["route"], $_SERVER["REQUEST_URI"])) {
-				$foundRoute = true;
-				if ($route["method"] !== $_SERVER["REQUEST_METHOD"])
-					continue;
+		$uri = strtok($_SERVER["REQUEST_URI"], "?");
+		$uri = trim($uri, "\ \t\n\r\0\x0B\\/");
+		$method = $_SERVER["REQUEST_METHOD"];
 
-				if (array_key_exists("view", $route) && $route["view"] === true) {
-					include __DIR__ . "/views/$route[file]";
-					exit;
-				}
+		if (!array_key_exists("$method $uri", $this->routes))
+			$this->abort(404);
 
-				if (is_array($route["controller"])) {
-					$controller = $route["controller"];
-					$class = $controller["class"];
-					$callback = $controller["callback"];
+		$elem = $this->routes["$method $uri"];
+		$cInst = $elem["controller"];
+		$cAction = $cInst["action"];
 
-					print_r($class, $callback);
-					return (new $class)->$callback();
-				}
-				return $route["controller"]();
-			}
-		}
+		$vInst = $elem["view"];
+		$vAction = $vInst["action"];
 
-		if ($foundRoute) $this->abort(405);
-		$this->abort(404);
-	}
+		$model = new $elem["model"]();
+		$controller = new $cInst["class"]($model);
+		$view = new $vInst["class"]($model);
 
-	private function compareRoutes($r1, $r2) {
-		$route = explode('/', $r1);
-		$uri = explode('/', strtok($r2, '?'));
-
-		if (count($route) !== count($uri)) return false;
-
-		foreach ($route as $key => $value) {
-			if ($uri[$key] !== $value) return false;
-		}
-		return true;
+		$controller->$cAction();
+		echo $view->$vAction();
 	}
 
 	private function abort($code) {
