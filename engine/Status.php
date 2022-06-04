@@ -18,4 +18,8 @@ class Status {
 	public static function error($code, $msg): Status {
 		return new Status($code, ["error" => $msg]);
 	}
+
+	public static function custom($code, $resp): Status {
+		return new Status($code, $resp);
+	}
 }

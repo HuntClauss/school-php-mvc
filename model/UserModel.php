@@ -1,15 +1,6 @@
 <?php
 
-use engine\Database;
-use engine\Status;
-
-class UserModel extends Database {
-	public $status;
-
-	public function response($status) {
-		$this->status = $status;
-	}
-
+class UserModel extends Model {
 	public function add($username, $email, $password): bool {
 		$stmt = $this->db->prepare('INSERT INTO users (username, email, password) VALUES (?, ?, ?)');
 		$stmt->bind_param("sss", $username, $email, $password);

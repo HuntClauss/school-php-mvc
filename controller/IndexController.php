@@ -1,5 +1,3 @@
 <?php
 
-class IndexController {
-	public function index() {}
-}
+class IndexController extends Controller {}

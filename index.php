@@ -13,7 +13,7 @@ spl_autoload_register(function ($name) {
 
 
 $router = new Router();
-$router->get(new Route("/",  "index", "render", "Index"));
+$router->get(new Route("/",  "none", "render", "Index"));
 
 $router->post(new Route("/api/user/create", "create", "status", "User"));
 $router->post(new Route("/api/user/delete", "delete", "status", "User"));
@@ -25,6 +25,6 @@ $router->post(new Route("/api/user/logout", "logout", "status", "User"));
 $router->post(new Route("/api/notes/create", "create", "status", "Note"));
 $router->post(new Route("/api/notes/delete", "delete", "status", "Note"));
 $router->post(new Route("/api/notes/edit", "edit", "status", "Note"));
-$router->post(new Route("/api/notes/show", "show", "show", "Note"));
+$router->post(new Route("/api/notes/list", "list", "list", "Note"));
 
 $router->match();

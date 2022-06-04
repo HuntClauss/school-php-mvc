@@ -2,13 +2,7 @@
 
 use engine\Status;
 
-class UserController {
-	private $model;
-
-	public function __construct($model) {
-		$this->model = $model;
-	}
-
+class UserController extends Controller {
 	public function create() {
 		$required = ["username", "email", "password"];
 		$validation = [
@@ -114,6 +108,15 @@ class UserController {
 		return $this->model->response(Status::success(200, "successfully updated account information"));
 	}
 
+	public function show() {
+		session_start();
+		if (!isset($_SESSION["logged"]))
+			return $this->model->response(Status::error(403, "you have to be logged to do it"));
+
+		$result = $this->model->getByUsername($_SESSION["username"]);
+		return $this->model->response(Status::custom(200, $result));
+	}
+
 	public function auth() {
 		session_start();
 		if (isset($_SESSION["logged"]))
@@ -141,6 +144,4 @@ class UserController {
 		session_destroy();
 		return $this->model->response(Status::success(200, "successfully logged out"));
 	}
-
-	public function show() {}
 }

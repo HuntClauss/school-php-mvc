@@ -3,7 +3,7 @@
 namespace engine;
 use mysqli;
 
-class database {
+class Database {
 	public $db;
 
 	public function __construct() {
