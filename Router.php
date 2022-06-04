@@ -1,7 +1,5 @@
 <?php
 
-include_once "controllers/UserController.php";
-
 class Router {
 	private $routes = [];
 
@@ -22,7 +20,7 @@ class Router {
 		];
 	}
 
-	function methodRoute($route, $method, $controller) {
+	private function methodRoute($route, $method, $controller) {
 		$result = [
 			"method" => $method,
 			"route" => $route,
@@ -60,7 +58,8 @@ class Router {
 					$class = $controller["class"];
 					$callback = $controller["callback"];
 
-					return (new $class)->$callback($this);
+					print_r($class, $callback);
+					return (new $class)->$callback();
 				}
 				return $route["controller"]();
 			}
