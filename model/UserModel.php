@@ -16,7 +16,7 @@ class UserModel extends Database {
 		return $stmt->execute();
 	}
 
-	public function delete($username) {
+	public function delete($username): bool {
 		$stmt = $this->db->prepare('DELETE FROM users WHERE username = ?');
 		$stmt->bind_param("s", $username);
 		$stmt->execute();
@@ -43,5 +43,24 @@ class UserModel extends Database {
 			"username" => $username,
 			"email" => $email,
 		];
+	}
+
+	public function update($username, $arr) {
+		$params = "";
+		$types = "";
+		$values = [];
+		foreach ($arr as $key => $value) {
+			$params .= " $key = ?,";
+			$types .= "s";
+			$values[] = $value;
+		}
+		$params = rtrim($params, ",");
+		$types .= "s";
+		$values[] = $username;
+
+		$stmt = $this->db->prepare('UPDATE users SET'.$params.' WHERE username = ?');
+		$stmt->bind_param($types, ...$values);
+		$stmt->execute();
+		return $stmt->affected_rows === 1;
 	}
 }

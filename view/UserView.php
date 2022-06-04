@@ -29,7 +29,7 @@ class UserView {
 			return json_encode($resp);
 		}
 
-		$result = $this->model->getByUsername("test"); // TODO change to username
+		$result = $this->model->getByUsername($_SESSION["username"]);
 		if ($result === false) {
 			http_response_code(401);
 			return json_encode(["error" => "something went wrong"]);
