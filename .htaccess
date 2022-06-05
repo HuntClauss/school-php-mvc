@@ -1,6 +1,21 @@
 RewriteEngine On
 RewriteBase /
+
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^assets public/%{REQUEST_URI}
+RewriteRule ^assets/(.*)$ public/assets/$1 [L]
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule .*(\.css|\.js|\.ico)$ public%{REQUEST_URI} [QSA,L]
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^(.+)$ index.php [QSA,L]
+
+#Header add Access-Control-Allow-Origin http://localhost:3000
+<IfModule mod_headers.c>
+    SetEnvIf Origin "http(s)?://(www\.)?(.*)$" AccessControlAllowOrigin=$0
+    Header add Access-Control-Allow-Origin %{AccessControlAllowOrigin}e env=AccessControlAllowOrigin
+    Header merge Vary Origin
+</IfModule>

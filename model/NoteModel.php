@@ -4,7 +4,8 @@ class NoteModel extends Model {
 	public function add($username, $title, $content) {
 		$stmt = $this->db->prepare('INSERT INTO notes (owner, title, content) VALUES ((SELECT id FROM users WHERE username = ?), ?, ?)');
 		$stmt->bind_param("sss", $username, $title, $content);
-		return $stmt->execute();
+		$stmt->execute();
+		return $stmt->insert_id;
 	}
 
 	public function delete($username, $id) {

@@ -6,7 +6,7 @@ class NoteController extends Controller {
 	public function create() {
 		session_start();
 		if (!isset($_SESSION["logged"]))
-			return $this->model->response(Status::error(403, "you have to be logged to do it"));
+			return $this->model->response(Status::error(401, "you have to be logged to do it"));
 
 		$required = ["title", "content"];
 		$validation = [
@@ -17,42 +17,50 @@ class NoteController extends Controller {
 		foreach ($required as $field) {
 			$_POST[$field] = trim($_POST[$field]);
 			if (empty($_POST[$field]))
-				return $this->model->response(Status::error(403, "missing '$field' value"));
+				return $this->model->response(Status::error(406, "missing '$field' value"));
 
 			if (strlen($_POST[$field]) > $validation[$field])
-				return $this->model->response(Status::error(401, "content of '$field' is too long"));
+				return $this->model->response(Status::error(406, "content of '$field' is too long"));
 		}
 
+		$id = -1;
 		try {
-			$this->model->add($_SESSION["username"], $_POST["title"], $_POST["content"]);
+			$id = $this->model->add($_SESSION["username"], $_POST["title"], $_POST["content"]);
 		} catch (Exception $err) {
-			return $this->model->response(Status::error(401, "note with same title already exists"));
+			return $this->model->response(Status::error(406, "note with same title already exists"));
 		}
 
-		return $this->model->response(Status::success(200, "note added successfully"));
+		return $this->model->response(Status::custom(200, [
+			"success" => "note added successfully",
+			"note" => [
+				"id" => $id,
+				"title" => $_POST["title"],
+				"content" => $_POST["content"]
+			]
+		]));
 	}
 
 	public function delete() {
 		session_start();
 		if (!isset($_SESSION["logged"]))
-			return $this->model->response(Status::error(403, "you have to be logged to do it"));
+			return $this->model->response(Status::error(401, "you have to be logged to do it"));
 
 		if (empty($_POST["id"]))
-			return $this->model->response(Status::error(401, "invalid id provided"));
+			return $this->model->response(Status::error(403, "invalid id provided"));
 
 		$id = intval($_POST["id"]);
 		if (!$this->model->delete($_SESSION["username"], $id))
-			return $this->model->response(Status::error(401, "cannot delete note, unknown id"));
+			return $this->model->response(Status::error(406, "cannot delete note, unknown id"));
 		return $this->model->response(Status::success(200, "note deleted successfully"));
 	}
 
 	public function edit() {
 		session_start();
 		if (!isset($_SESSION["logged"]))
-			return $this->model->response(Status::error(403, "you have to be logged to do it"));
+			return $this->model->response(Status::error(401, "you have to be logged to do it"));
 
 		if (empty($_POST["id"]))
-			return $this->model->response(Status::error(401, "note id not specified"));
+			return $this->model->response(Status::error(406, "note id not specified"));
 
 		$id = intval($_POST["id"]);
 		unset($_POST["id"]);
@@ -70,18 +78,18 @@ class NoteController extends Controller {
 			}
 
 			if (array_key_exists($key, $_POST) && array_key_exists($key, $validation) && strlen($value) > $validation[$key])
-				return $this->model->response(Status::error(403, "'$key' is too long"));
+				return $this->model->response(Status::error(406, "'$key' is too long"));
 		}
 
 		if (!$this->model->update($_SESSION["username"], $id, $_POST))
-			return $this->model->response(Status::error(401, "nothing change"));
+			return $this->model->response(Status::error(200, "nothing change"));
 		return $this->model->response(Status::success(200, "note edited successfully"));
 	}
 
 	public function list() {
 		session_start();
 		if (!isset($_SESSION["logged"]))
-			return $this->model->response(Status::error(403, "you have to be logged to do it"));
+			return $this->model->response(Status::error(401, "you have to be logged to do it"));
 
 		$limit = 20;
 		if (!empty($_POST["limit"])) {

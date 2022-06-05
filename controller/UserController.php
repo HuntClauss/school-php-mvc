@@ -13,11 +13,11 @@ class UserController extends Controller {
 
 		foreach ($required as $field) {
 			if (!isset($_POST[$field])) {
-				return $this->model->response(Status::error(403, "missing '$field' value"));
+				return $this->model->response(Status::error(406, "missing '$field' value"));
 			}
 
 			if (!preg_match($validation[$field], $_POST[$field])) {
-				return $this->model->response(Status::error(403, "'$field' is invalid or contains prohibited signs"));
+				return $this->model->response(Status::error(406, "'$field' is invalid or contains prohibited signs"));
 			}
 		}
 
@@ -31,7 +31,7 @@ class UserController extends Controller {
 		try {
 			$this->model->add($username, $email, $passwd_hash);
 		} catch (Exception $err) {
-			return $this->model->response(Status::error(401, "username already in use"));
+			return $this->model->response(Status::error(406, "username already in use"));
 		}
 
 		session_start();
@@ -43,7 +43,7 @@ class UserController extends Controller {
 	public function delete() {
 		session_start();
 		if (!isset($_SESSION["logged"]))
-			return $this->model->response(Status::error(403, "you have to be logged to do it"));
+			return $this->model->response(Status::error(401, "you have to be logged to do it"));
 		if (!isset($_POST["password"]))
 			return $this->model->response(Status::error(403, "you have to provide password to perform this action"));
 
@@ -62,7 +62,7 @@ class UserController extends Controller {
 	public function edit() {
 		session_start();
 		if (!isset($_SESSION["logged"]))
-			return $this->model->response(Status::error(403, "you have to be logged to do it"));
+			return $this->model->response(Status::error(401, "you have to be logged to do it"));
 
 		$validation = [
 			"username" => "/[a-z\d_\-]{4,30}/i",
@@ -77,13 +77,18 @@ class UserController extends Controller {
 				continue;
 			}
 
+			if (empty($value)) {
+				unset($_POST[$key]);
+				continue;
+			}
+
 			if (array_key_exists($key, $_POST) && array_key_exists($key, $validation) && !preg_match($validation[$key], $value))
-				return $this->model->response(Status::error(403, "'$key' is invalid or contains prohibited signs"));
+				return $this->model->response(Status::error(406, "'$key' is invalid or contains prohibited signs"));
 		}
 
 		if (isset($_POST["new_password"])) {
 			if (!isset($_POST["password"]))
-				return $this->model->response(Status::error(403, "you have to provide password to perform this action"));
+				return $this->model->response(Status::error(406, "you have to provide password to perform this action"));
 
 			if ($_POST["password"] !== $_POST["new_password"]) {
 				if (!password_verify($_POST["password"], $this->model->auth($_SESSION["username"])))
@@ -100,8 +105,13 @@ class UserController extends Controller {
 		if (count($_POST) === 0)
 			return $this->model->response(Status::success(200, "nothing changed"));
 
-		if (!$this->model->update($_SESSION["username"], $_POST))
-			return $this->model->response(Status::error(200, "nothing changed"));
+		try {
+			if (!$this->model->update($_SESSION["username"], $_POST))
+				return $this->model->response(Status::success(200, "nothing changed"));
+		} catch (Exception $e) {
+			return $this->model->response(Status::error(406, "Account with that username already exists"));
+		}
+
 
 		if (array_key_exists("username", $_POST))
 			$_SESSION["username"] = $_POST["username"];
@@ -111,7 +121,7 @@ class UserController extends Controller {
 	public function show() {
 		session_start();
 		if (!isset($_SESSION["logged"]))
-			return $this->model->response(Status::error(403, "you have to be logged to do it"));
+			return $this->model->response(Status::error(401, "you have to be logged to do it"));
 
 		$result = $this->model->getByUsername($_SESSION["username"]);
 		return $this->model->response(Status::custom(200, $result));
@@ -125,7 +135,7 @@ class UserController extends Controller {
 		$required = ["username", "password"];
 		foreach ($required as $field)
 			if (!isset($_POST[$field]))
-				return $this->model->response(Status::error(403, "missing '$field' value"));
+				return $this->model->response(Status::error(406, "missing '$field' value"));
 
 		$username = $_POST["username"];
 		$password = $_POST["password"];
@@ -143,5 +153,10 @@ class UserController extends Controller {
 		session_start();
 		session_destroy();
 		return $this->model->response(Status::success(200, "successfully logged out"));
+	}
+
+	public function isLogged() {
+		session_start();
+		return $this->model->response(Status::custom(200, ["logged" => isset($_SESSION["logged"])]));
 	}
 }

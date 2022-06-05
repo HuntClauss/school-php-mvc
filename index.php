@@ -18,9 +18,10 @@ $router->get(new Route("/",  "none", "render", "Index"));
 $router->post(new Route("/api/user/create", "create", "status", "User"));
 $router->post(new Route("/api/user/delete", "delete", "status", "User"));
 $router->post(new Route("/api/user/edit", "edit", "status", "User"));
-$router->post(new Route("/api/user/show", "show", "show", "User"));
+$router->post(new Route("/api/user/profile", "show", "show", "User"));
 $router->post(new Route("/api/user/auth", "auth", "status", "User"));
 $router->post(new Route("/api/user/logout", "logout", "status", "User"));
+$router->post(new Route("/api/user/status", "isLogged", "status", "User"));
 
 $router->post(new Route("/api/notes/create", "create", "status", "Note"));
 $router->post(new Route("/api/notes/delete", "delete", "status", "Note"));
